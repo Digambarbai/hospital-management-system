@@ -1,4 +1,4 @@
-# College Hospital Management System
+# College Hospital Management System Project
 
 Project layout:
 
