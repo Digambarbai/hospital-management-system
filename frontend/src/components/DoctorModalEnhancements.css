@@ -1,0 +1,83 @@
+.doctor-modal-overlay{
+  backdrop-filter:blur(7px);
+  background:linear-gradient(135deg,rgba(15,53,96,.68),rgba(15,112,155,.42));
+  padding:24px;
+}
+
+.doctor-modal--modern{
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:20px;
+  box-shadow:0 28px 80px rgba(12,49,87,.32);
+  max-width:760px;
+}
+
+.doctor-modal--wide{
+  max-width:1160px;
+  width:min(1160px,calc(100vw - 48px));
+}
+
+.doctor-modal--wide .doctor-form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+.doctor-modal--modern .doctor-modal-header{
+  background:linear-gradient(115deg,#f7fbff,#eef8ff);
+  border-bottom:1px solid #dceaf7;
+  padding:19px 24px;
+}
+
+.doctor-modal-kicker{
+  color:#2583e7;
+  display:block;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:1.25px;
+  margin-bottom:5px;
+}
+
+.doctor-modal--modern .doctor-modal-header h2{
+  color:#203d62;
+  font-size:18px;
+  letter-spacing:-.35px;
+}
+
+.doctor-modal--modern .doctor-modal-header button{
+  background:#fff;
+  box-shadow:0 4px 12px rgba(42,93,140,.12);
+  height:31px;
+  transition:background .2s,transform .2s;
+  width:31px;
+}
+
+.doctor-modal--modern .doctor-modal-header button:hover{background:#e9f4ff;transform:rotate(90deg)}
+.doctor-modal--modern .doctor-form{padding:23px 24px 25px}
+.doctor-modal--modern .doctor-form-grid{gap:17px 18px}
+.doctor-modal--modern .doctor-form-field{position:relative}
+.doctor-modal--modern .doctor-form-field label{color:#415d7d;font-size:10px;letter-spacing:.12px}
+.doctor-modal--modern .doctor-form-field input,.doctor-modal--modern .doctor-form-field select{background:#fbfdff;border-color:#d9e6f2;border-radius:9px;min-height:40px;padding:10px 11px;transition:border-color .18s,box-shadow .18s,background .18s}
+.doctor-modal--modern .doctor-form-field input:hover,.doctor-modal--modern .doctor-form-field select:hover{border-color:#bcd8f3}
+.doctor-modal--modern .doctor-form-field input:focus,.doctor-modal--modern .doctor-form-field select:focus{background:#fff;box-shadow:0 0 0 4px rgba(45,141,235,.12)}
+.doctor-modal--modern .doctor-password-wrap{background:#fbfdff;border-color:#d9e6f2;border-radius:9px;min-height:40px}
+.doctor-modal--modern .doctor-password-wrap input{background:transparent;min-height:auto}
+.doctor-modal--modern .doctor-password-note{border-radius:10px;line-height:1.45;margin-top:19px;padding:10px 12px}
+.doctor-modal--modern .doctor-modal-actions{border-top:1px solid #edf3f8;margin-top:19px;padding-top:18px}
+.doctor-modal--modern .doctor-primary-button{border-radius:9px;box-shadow:0 8px 18px rgba(29,129,223,.22);min-width:128px}
+.doctor-modal--modern .doctor-secondary-button{border-radius:9px;min-width:92px}
+
+@media(max-width:767px){
+  .doctor-modal-overlay{align-items:flex-end;padding:0}
+  .doctor-modal--modern{border-bottom-left-radius:0;border-bottom-right-radius:0;max-height:92vh}
+  .doctor-modal--modern .doctor-modal-header,.doctor-modal--modern .doctor-form{padding-left:18px;padding-right:18px}
+}
+
+@media(min-width:768px) and (max-width:980px){
+  .doctor-modal--wide .doctor-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.doctor-password-detail{margin-top:18px;text-align:left}
+.doctor-password-detail>label{color:#50637e;display:block;font-size:10px;font-weight:700;margin-bottom:6px}
+.doctor-password-status{align-items:center;background:#fbfdff;border:1px solid #d9e6f2;border-radius:9px;display:flex;min-height:40px}
+.doctor-password-status input{background:transparent;border:0;color:#4c617d;font-size:11px;outline:0;padding:10px 11px;width:100%}
+.doctor-password-status button{align-items:center;background:#eaf4ff;border:0;border-radius:7px;color:#2583e7;display:flex;height:28px;justify-content:center;margin-right:6px;width:30px}.doctor-password-status button svg{height:15px;width:15px}
+.doctor-password-wrap button svg{height:15px;width:15px}
+.doctor-password-detail>small{color:#8798ae;display:block;font-size:9px;margin-top:5px}
+.doctor-reset-form{padding:22px 24px 25px}
+.doctor-reset-form .doctor-password-note{margin-top:0}
