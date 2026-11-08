@@ -1,0 +1,1 @@
+package com.college.hospitalmanagement.dto;import jakarta.validation.constraints.*;import java.time.LocalDate;public record BedAllocationRequestDTO(@NotNull Long patientId,@NotNull @FutureOrPresent LocalDate admissionDate,@Size(max=1000) String notes){}

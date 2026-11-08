@@ -21,7 +21,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> doctorError(IllegalArgumentException exception) {
         String message = exception.getMessage();
-        HttpStatus status = message != null && message.startsWith("Login email already exists")
+        HttpStatus status = message != null && (message.contains("already exists") || message.contains("already has") || message.contains("cannot be deleted") || message.contains("capacity") || message.contains("Only available") || message.contains("already has an active") || message.contains("allocation history"))
                 ? HttpStatus.CONFLICT
                 : HttpStatus.NOT_FOUND;
         return ResponseEntity.status(status).body(Map.of("message", message == null ? "Request failed" : message));

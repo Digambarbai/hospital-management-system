@@ -1,0 +1,1 @@
+package com.college.hospitalmanagement.dto;import jakarta.validation.constraints.*;public record RoomRequestDTO(@NotBlank String roomNumber,@NotNull Long wardId,@NotBlank String roomType,@NotNull @Min(1) Integer capacity,@NotBlank @Pattern(regexp="Active|Inactive") String status){}

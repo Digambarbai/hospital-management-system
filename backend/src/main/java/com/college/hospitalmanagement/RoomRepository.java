@@ -1,0 +1,1 @@
+package com.college.hospitalmanagement;import java.util.*;import org.springframework.data.jpa.repository.JpaRepository;public interface RoomRepository extends JpaRepository<Room,Long>{Optional<Room> findByWardIdAndRoomNumber(Long wardId,String roomNumber);List<Room> findByWardId(Long wardId);}

@@ -32,6 +32,7 @@ function ChangePasswordModal({ onClose }) {
 
 function Topbar({ connection, user, onMenuClick, onLogout, onNavigate }) {
   const isUp = connection.status === 'UP'
+  const isDoctor = user.role === 'DOCTOR'
   const initials = user.name.split(' ').map((part) => part[0]).join('').slice(0, 2)
   const [profileOpen, setProfileOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
@@ -56,7 +57,7 @@ function Topbar({ connection, user, onMenuClick, onLogout, onNavigate }) {
     <header className="topbar">
       <div className="topbar-left">
         <button className="sidebar-toggle" type="button" onClick={onMenuClick} aria-label="Toggle navigation"><Icon name="menu" /></button>
-        <div><p className="eyebrow">ADMIN OVERVIEW</p><h1>Welcome back, {user.name}</h1></div>
+        <div><p className="eyebrow">{isDoctor ? 'DOCTOR OVERVIEW' : 'ADMIN OVERVIEW'}</p><h1>Welcome back, {user.name}</h1></div>
       </div>
       <div className="topbar-actions">
         <div className="online-status d-none d-md-flex" title={connection.message}>
@@ -65,13 +66,13 @@ function Topbar({ connection, user, onMenuClick, onLogout, onNavigate }) {
         <div className="profile-menu" ref={profileRef}>
           <button className="profile-trigger" type="button" aria-label="Open profile menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>
             <div className="profile-avatar">{initials}</div>
-            <div className="profile-copy d-none d-md-block"><strong>{user.name}</strong><small>{user.email}</small></div>
+            <div className="profile-copy d-none d-md-block"><strong>{user.name}</strong><small>{isDoctor ? 'Doctor' : user.email}</small></div>
             <span className="profile-chevron">⌄</span>
           </button>
           {profileOpen && <div className="profile-dropdown" role="menu">
-            <div className="profile-dropdown-heading"><span className="profile-dropdown-label">ACCOUNT</span><strong>{user.name}</strong><small>{user.email}</small></div>
-            <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); onNavigate('My Profile') }}>My Profile</button>
-            <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); setChangePasswordOpen(false); onNavigate('Change Password') }}>Change Password</button>
+            <div className="profile-dropdown-heading"><span className="profile-dropdown-label">{isDoctor ? 'DOCTOR ACCOUNT' : 'ACCOUNT'}</span><strong>{user.name}</strong><small>{isDoctor ? `Doctor · ${user.email}` : user.email}</small></div>
+            {!isDoctor && <><button type="button" role="menuitem" onClick={() => { setProfileOpen(false); onNavigate('My Profile') }}>My Profile</button>
+            <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); setChangePasswordOpen(false); onNavigate('Change Password') }}>Change Password</button></>}
             <button className="profile-logout" type="button" role="menuitem" onClick={onLogout}>Logout</button>
           </div>}
         </div>

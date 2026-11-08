@@ -1,0 +1,1 @@
+package com.college.hospitalmanagement.dto;public record BedResponseDTO(Long id,String bedNumber,Long wardId,String wardName,Long roomId,String roomNumber,String bedType,String status,Long allocationId,Long patientId,String patientName){}

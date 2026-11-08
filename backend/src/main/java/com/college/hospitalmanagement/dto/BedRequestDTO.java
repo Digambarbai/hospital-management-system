@@ -1,0 +1,1 @@
+package com.college.hospitalmanagement.dto;import jakarta.validation.constraints.*;public record BedRequestDTO(@NotBlank String bedNumber,@NotNull Long wardId,@NotNull Long roomId,@NotBlank String bedType,@NotBlank @Pattern(regexp="Available|Occupied|Reserved|Maintenance") String status){}

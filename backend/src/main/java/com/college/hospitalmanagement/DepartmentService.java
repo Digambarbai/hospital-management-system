@@ -1,0 +1,21 @@
+package com.college.hospitalmanagement;
+
+import com.college.hospitalmanagement.dto.*;
+import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service @Transactional(readOnly = true)
+public class DepartmentService {
+    private final DepartmentRepository departments; private final DoctorRepository doctors; private final NurseRepository nurses;
+    public DepartmentService(DepartmentRepository departments,DoctorRepository doctors,NurseRepository nurses){this.departments=departments;this.doctors=doctors;this.nurses=nurses;}
+    public List<DepartmentResponseDTO> list(){return departments.findAll().stream().map(this::response).toList();}
+    public DepartmentResponseDTO get(Long id){return response(find(id));}
+    @Transactional public DepartmentResponseDTO create(DepartmentRequestDTO r){ensureUnique(r,null);Department d=new Department();apply(r,d);return response(departments.save(d));}
+    @Transactional public DepartmentResponseDTO update(Long id,DepartmentRequestDTO r){Department d=find(id);ensureUnique(r,id);apply(r,d);return response(departments.save(d));}
+    @Transactional public void delete(Long id){Department d=find(id);if(!d.getAssignedDoctors().isEmpty()||!d.getAssignedNurses().isEmpty())throw new IllegalArgumentException("Department cannot be deleted while staff are assigned");departments.delete(d);}
+    private Department find(Long id){return departments.findById(id).orElseThrow(()->new IllegalArgumentException("Department not found: "+id));}
+    private void ensureUnique(DepartmentRequestDTO r,Long currentId){departments.findByNameIgnoreCase(r.name().trim()).filter(d->!d.getId().equals(currentId)).ifPresent(d->{throw new IllegalArgumentException("Department name already exists");});departments.findByCodeIgnoreCase(r.code().trim()).filter(d->!d.getId().equals(currentId)).ifPresent(d->{throw new IllegalArgumentException("Department code already exists");});}
+    private void apply(DepartmentRequestDTO r,Department d){Set<Long> doctorIds=new LinkedHashSet<>(r.doctorIds());Set<Long> nurseIds=new LinkedHashSet<>(r.nurseIds());if(doctorIds.size()!=r.doctorIds().size()||nurseIds.size()!=r.nurseIds().size())throw new IllegalArgumentException("Staff cannot be assigned more than once");List<Doctor> selectedDoctors=doctors.findAllById(doctorIds);List<Nurse> selectedNurses=nurses.findAllById(nurseIds);if(selectedDoctors.size()!=doctorIds.size())throw new IllegalArgumentException("One or more assigned doctors were not found");if(selectedNurses.size()!=nurseIds.size())throw new IllegalArgumentException("One or more assigned nurses were not found");Doctor head=r.headDoctorId()==null?null:doctors.findById(r.headDoctorId()).orElseThrow(()->new IllegalArgumentException("Head of Department not found"));if(head!=null&&!doctorIds.contains(head.getId()))throw new IllegalArgumentException("Head of Department must be an assigned doctor");String oldName=d.getName(),newName=r.name().trim();for(Doctor old:d.getAssignedDoctors())if(!doctorIds.contains(old.getId())&&oldName!=null&&oldName.equalsIgnoreCase(old.getDepartment()))old.setDepartment("Unassigned");for(Nurse old:d.getAssignedNurses())if(!nurseIds.contains(old.getId())&&oldName!=null&&oldName.equalsIgnoreCase(old.getDepartment()))old.setDepartment("Unassigned");for(Doctor doctor:selectedDoctors)doctor.setDepartment(newName);for(Nurse nurse:selectedNurses)nurse.setDepartment(newName);d.setName(newName);d.setCode(r.code().trim().toUpperCase());d.setDescription(r.description()==null?null:r.description().trim());d.setHeadDoctor(head);d.setAssignedDoctors(new LinkedHashSet<>(selectedDoctors));d.setAssignedNurses(new LinkedHashSet<>(selectedNurses));d.setStatus(r.status());}
+    private DepartmentResponseDTO response(Department d){List<AssignedStaffDTO> doctorRows=d.getAssignedDoctors().stream().map(x->new AssignedStaffDTO(x.getId(),x.getFullName())).toList();List<AssignedStaffDTO> nurseRows=d.getAssignedNurses().stream().map(x->new AssignedStaffDTO(x.getId(),x.getFullName())).toList();Doctor head=d.getHeadDoctor();return new DepartmentResponseDTO(d.getId(),d.getName(),d.getCode(),d.getDescription(),head==null?null:head.getId(),head==null?null:head.getFullName(),doctorRows,nurseRows,d.getStatus());}
+}

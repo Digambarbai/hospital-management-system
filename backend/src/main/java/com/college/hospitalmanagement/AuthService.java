@@ -5,6 +5,8 @@ import com.college.hospitalmanagement.dto.AdminPasswordChangeDTO;
 import com.college.hospitalmanagement.dto.AdminProfileDTO;
 import com.college.hospitalmanagement.dto.AdminProfileUpdateDTO;
 import com.college.hospitalmanagement.dto.LoginRequestDTO;
+import com.college.hospitalmanagement.dto.DoctorResponseDTO;
+import com.college.hospitalmanagement.dto.DoctorProfileUpdateDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,10 +20,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class AuthService {
     private final AdminAccountRepository adminRepository;
+    private final DoctorRepository doctorRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(AdminAccountRepository adminRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(AdminAccountRepository adminRepository, DoctorRepository doctorRepository, PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
+        this.doctorRepository = doctorRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -32,6 +36,13 @@ public class AuthService {
             return token(new SessionUser(admin.getId(), admin.getName(), admin.getEmail(), "ADMIN"));
         }
 
+        Doctor doctor = doctorRepository.findByLoginEmailIgnoreCase(request.email()).orElse(null);
+        if (doctor != null && doctor.getPasswordHash() != null
+                && !"Inactive".equalsIgnoreCase(doctor.getStatus())
+                && passwordEncoder.matches(request.password(), doctor.getPasswordHash())) {
+            return token(new SessionUser(doctor.getId(), doctor.getFullName(), doctor.getLoginEmail(), "DOCTOR"));
+        }
+
         throw invalidCredentials();
     }
 
@@ -40,6 +51,42 @@ public class AuthService {
     }
 
     public AdminProfileDTO profile(SessionUser user) { return toProfile(findAdmin(user.id())); }
+
+    public DoctorResponseDTO doctorProfile(SessionUser user) {
+        return doctorResponse(findDoctor(user.id()));
+    }
+
+    @Transactional
+    public DoctorResponseDTO updateDoctorProfile(SessionUser user, DoctorProfileUpdateDTO request) {
+        Doctor doctor = findDoctor(user.id());
+        doctor.setFullName(request.fullName().trim());
+        doctor.setMobile(request.mobile().trim());
+        doctor.setEmail(request.email() == null ? null : request.email().trim());
+        doctor.setQualification(request.qualification().trim());
+        return doctorResponse(doctorRepository.saveAndFlush(doctor));
+    }
+
+    @Transactional
+    public void changeDoctorPassword(SessionUser user, AdminPasswordChangeDTO request) {
+        Doctor doctor = findDoctor(user.id());
+        if (!passwordEncoder.matches(request.oldPassword(), doctor.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
+        }
+        doctor.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        doctorRepository.save(doctor);
+    }
+
+    private Doctor findDoctor(Long id) {
+        return doctorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session is no longer valid"));
+    }
+
+    private DoctorResponseDTO doctorResponse(Doctor doctor) {
+        return new DoctorResponseDTO(doctor.getId(), doctor.getFullName(), doctor.getGender(), doctor.getDateOfBirth(),
+                doctor.getMobile(), doctor.getEmail(), doctor.getQualification(), doctor.getSpecialization(),
+                doctor.getDepartment(), doctor.getYearsOfExperience(), doctor.getConsultationFee(), doctor.getStatus(),
+                doctor.getLoginEmail());
+    }
 
     @Transactional
     public AdminProfileDTO updateProfile(SessionUser user, AdminProfileUpdateDTO request) {

@@ -29,12 +29,15 @@ const pageRoutes = {
 }
 
 const knownRoutes = new Set(Object.values(pageRoutes))
+const doctorRoutes = new Set(['/doctor-dashboard', ...Object.values(pageRoutes).filter((path) => path !== '/dashboard')])
 
 function pageFromPath(pathname) {
+  if (pathname === '/doctor-dashboard') return 'Dashboard'
   return Object.entries(pageRoutes).find(([, path]) => path === pathname)?.[0] ?? 'Dashboard'
 }
 
-function routeForPage(page) {
+function routeForPage(page, role) {
+  if (role === 'DOCTOR' && page === 'Dashboard') return '/doctor-dashboard'
   return pageRoutes[page] ?? pageRoutes.Dashboard
 }
 
@@ -82,7 +85,7 @@ export function Dashboard({ user, onLogout, onUserUpdated }) {
   }, [])
 
   const handleNavigate = (page) => {
-    const nextRoute = routeForPage(page)
+    const nextRoute = routeForPage(page, user.role)
     if (window.location.pathname !== nextRoute) window.history.pushState({}, '', nextRoute)
     setActivePage(pageFromPath(nextRoute))
   }
@@ -93,7 +96,7 @@ export function Dashboard({ user, onLogout, onUserUpdated }) {
       <div className={`dashboard-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Topbar connection={connection} user={user} onMenuClick={handleSidebarToggle} onLogout={onLogout} onNavigate={handleNavigate} />
         <main className="dashboard-main">
-          {activePage === 'My Profile' ? <AdminProfilePage user={user} onUserUpdated={onUserUpdated} onNavigate={handleNavigate} /> : activePage === 'Change Password' ? <AdminChangePasswordPage onNavigate={handleNavigate} /> : activePage === 'Departments' ? <DepartmentManagement /> : activePage === 'Patients' ? <PatientManagement /> : activePage === 'Doctors' ? <DoctorManagement /> : activePage === 'Nurses' ? <NurseManagement /> : activePage === 'Appointments' ? <AppointmentManagement /> : activePage === 'Wards & Rooms' ? <BedManagement /> : activePage === 'Medical Records' ? <MedicalRecordsPlaceholder /> : <>
+          {user.role === 'DOCTOR' && !['Dashboard','Appointments'].includes(activePage) ? <AccessDenied page={activePage} /> : activePage === 'My Profile' ? <AdminProfilePage user={user} onUserUpdated={onUserUpdated} onNavigate={handleNavigate} /> : activePage === 'Change Password' ? <AdminChangePasswordPage onNavigate={handleNavigate} /> : activePage === 'Departments' ? <DepartmentManagement /> : activePage === 'Patients' ? <PatientManagement /> : activePage === 'Doctors' ? <DoctorManagement /> : activePage === 'Nurses' ? <NurseManagement /> : activePage === 'Appointments' ? <AppointmentManagement readOnly={user.role==='DOCTOR'} /> : activePage === 'Wards & Rooms' ? <BedManagement /> : activePage === 'Medical Records' ? <MedicalRecordsPlaceholder /> : <>
           <div className="page-heading"><div><p className="demo-label">DEMO DATA · TODAY, OCTOBER 24, 2025</p><h2>Hospital Overview</h2></div><button className="date-button" type="button"><Icon name="calendar" /> Today <span>⌄</span></button></div>
 
           <section className="stats-grid" aria-label="Demo summary statistics">
@@ -146,6 +149,10 @@ function MedicalRecordsPlaceholder() {
   )
 }
 
+function AccessDenied({ page }) {
+  return <section className="panel" aria-labelledby="access-denied-title"><div className="panel-header"><div><p className="demo-label">DOCTOR ACCESS</p><h2 id="access-denied-title">Access Denied</h2><p>You do not have permission to open {page}. Please contact an administrator if you need access.</p></div></div></section>
+}
+
 function csrfToken() {
   return document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=')
 }
@@ -158,7 +165,9 @@ function App() {
     fetch(apiUrl('/api/auth/me'), { credentials: 'include' })
       .then((response) => response.ok ? response.json() : null)
       .then((authenticatedUser) => {
-        if (authenticatedUser && !knownRoutes.has(window.location.pathname)) {
+        if (authenticatedUser?.role === 'DOCTOR' && !doctorRoutes.has(window.location.pathname)) {
+          window.history.replaceState({}, '', '/doctor-dashboard')
+        } else if (authenticatedUser?.role === 'ADMIN' && !knownRoutes.has(window.location.pathname)) {
           window.history.replaceState({}, '', pageRoutes.Dashboard)
         }
         setUser(authenticatedUser)
@@ -172,10 +181,8 @@ function App() {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
     })
     const body = await response.json().catch(() => ({}))
-    if (!response.ok || body.role !== 'ADMIN') throw new Error('Invalid email or password.')
-    if (!knownRoutes.has(window.location.pathname)) {
-      window.history.replaceState({}, '', pageRoutes.Dashboard)
-    }
+    if (!response.ok || !['ADMIN', 'DOCTOR'].includes(body.role)) throw new Error('Invalid email or password.')
+    window.history.replaceState({}, '', body.role === 'DOCTOR' ? '/doctor-dashboard' : pageRoutes.Dashboard)
     setUser(body)
   }
 

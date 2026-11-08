@@ -2,7 +2,8 @@ import Icon from './Icon.jsx'
 
 const mainNavigation = [
   ['dashboard', 'Dashboard'], ['doctors', 'Doctors'], ['patients', 'Patients'],
-  ['appointments', 'Appointments'], ['nurses', 'Nurses'], ['departments', 'Departments'], ['wards', 'Wards & Rooms'],
+  ['nurses', 'Nurses'], ['appointments', 'Appointments'], ['wards', 'Wards & Rooms'],
+  ['reports', 'Medical Records'], ['departments', 'Departments'],
 ]
 
 function NavigationGroup({ title, items, active, collapsed, onNavigate }) {

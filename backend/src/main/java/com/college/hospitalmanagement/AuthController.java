@@ -5,6 +5,8 @@ import com.college.hospitalmanagement.dto.LoginRequestDTO;
 import com.college.hospitalmanagement.dto.AdminPasswordChangeDTO;
 import com.college.hospitalmanagement.dto.AdminProfileDTO;
 import com.college.hospitalmanagement.dto.AdminProfileUpdateDTO;
+import com.college.hospitalmanagement.dto.DoctorResponseDTO;
+import com.college.hospitalmanagement.dto.DoctorProfileUpdateDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -54,6 +56,22 @@ public class AuthController {
     @GetMapping("/profile")
     public AdminProfileDTO profile(Authentication authentication) {
         return authService.profile((SessionUser) authentication.getPrincipal());
+    }
+
+    @GetMapping("/doctor-profile")
+    public DoctorResponseDTO doctorProfile(Authentication authentication) {
+        return authService.doctorProfile((SessionUser) authentication.getPrincipal());
+    }
+
+    @PutMapping("/doctor-profile")
+    public DoctorResponseDTO updateDoctorProfile(@Valid @RequestBody DoctorProfileUpdateDTO request, Authentication authentication) {
+        return authService.updateDoctorProfile((SessionUser) authentication.getPrincipal(), request);
+    }
+
+    @PostMapping("/doctor-change-password")
+    public ResponseEntity<Void> changeDoctorPassword(@Valid @RequestBody AdminPasswordChangeDTO request, Authentication authentication) {
+        authService.changeDoctorPassword((SessionUser) authentication.getPrincipal(), request);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/profile")
