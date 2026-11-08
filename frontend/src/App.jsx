@@ -56,6 +56,8 @@ const patientTypes = [
 
 export function Dashboard({ user, onLogout, onUserUpdated }) {
   const [connection, setConnection] = useState({ status: 'Checking...', message: '' })
+  const [dashboard, setDashboard] = useState(null)
+  const [dashboardAppointments, setDashboardAppointments] = useState([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState(() => pageFromPath(window.location.pathname))
@@ -79,6 +81,20 @@ export function Dashboard({ user, onLogout, onUserUpdated }) {
   }, [])
 
   useEffect(() => {
+    fetch(apiUrl('/api/appointments'), { credentials: 'include' })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((rows) => setDashboardAppointments(rows.filter((row) => row.appointmentDate === new Date().toISOString().slice(0, 10)).slice(0, 5)))
+      .catch(() => setDashboardAppointments([]))
+  }, [])
+
+  useEffect(() => {
+    fetch(apiUrl('/api/dashboard'), { credentials: 'include' })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then(setDashboard)
+      .catch(() => setDashboard(null))
+  }, [])
+
+  useEffect(() => {
     const syncPageWithBrowser = () => setActivePage(pageFromPath(window.location.pathname))
     window.addEventListener('popstate', syncPageWithBrowser)
     return () => window.removeEventListener('popstate', syncPageWithBrowser)
@@ -97,28 +113,28 @@ export function Dashboard({ user, onLogout, onUserUpdated }) {
         <Topbar connection={connection} user={user} onMenuClick={handleSidebarToggle} onLogout={onLogout} onNavigate={handleNavigate} />
         <main className="dashboard-main">
           {user.role === 'DOCTOR' && !['Dashboard','Appointments'].includes(activePage) ? <AccessDenied page={activePage} /> : activePage === 'My Profile' ? <AdminProfilePage user={user} onUserUpdated={onUserUpdated} onNavigate={handleNavigate} /> : activePage === 'Change Password' ? <AdminChangePasswordPage onNavigate={handleNavigate} /> : activePage === 'Departments' ? <DepartmentManagement /> : activePage === 'Patients' ? <PatientManagement /> : activePage === 'Doctors' ? <DoctorManagement /> : activePage === 'Nurses' ? <NurseManagement /> : activePage === 'Appointments' ? <AppointmentManagement readOnly={user.role==='DOCTOR'} /> : activePage === 'Wards & Rooms' ? <BedManagement /> : activePage === 'Medical Records' ? <MedicalRecordsPlaceholder /> : <>
-          <div className="page-heading"><div><p className="demo-label">DEMO DATA · TODAY, OCTOBER 24, 2025</p><h2>Hospital Overview</h2></div><button className="date-button" type="button"><Icon name="calendar" /> Today <span>⌄</span></button></div>
+          <div className="page-heading"><div><p className="demo-label">LIVE HOSPITAL DATA</p><h2>Hospital Overview</h2></div><button className="date-button" type="button"><Icon name="calendar" /> Today <span>⌄</span></button></div>
 
-          <section className="stats-grid" aria-label="Demo summary statistics">
-            <StatCard label="Total Patients" value="2,815" trend="+12.5%" icon="patients" tone="blue" />
-            <StatCard label="Today's Appointments" value="124" trend="+8.2%" icon="appointments" tone="purple" />
-            <StatCard label="Available Doctors" value="42" trend="+3.8%" icon="doctors" tone="teal" />
-            <StatCard label="Bed Occupancy" value="76%" trend="-2.4%" icon="wards" tone="orange" />
+          <section className="stats-grid" aria-label="Live summary statistics">
+            <StatCard label="Total Patients" value={dashboard?.totalPatients ?? '—'} trend="Live" icon="patients" tone="blue" />
+            <StatCard label="Today's Appointments" value={dashboard?.todayAppointments ?? '—'} trend="Live" icon="appointments" tone="purple" />
+            <StatCard label="Available Doctors" value={dashboard?.availableDoctors ?? '—'} trend="Live" icon="doctors" tone="teal" />
+            <StatCard label="Bed Occupancy" value={dashboard ? `${dashboard.bedOccupancyPercent}%` : '—'} trend="Live" icon="wards" tone="orange" />
           </section>
 
           <section className="dashboard-grid">
             <article className="panel appointment-panel">
-              <div className="panel-header"><div><h3>Today's Appointments</h3><p>Scheduled patient consultations <span className="demo-pill">DEMO</span></p></div><button className="text-button" type="button">View All <Icon name="arrow" /></button></div>
+              <div className="panel-header"><div><h3>Today's Appointments</h3><p>Live appointments from the hospital database</p></div><button className="text-button" type="button" onClick={() => handleNavigate('Appointments')}>View All <Icon name="arrow" /></button></div>
               <div className="appointment-list">
-                {appointments.map(([time, patient, department, doctor, initials, color]) => <div className="appointment-row" key={patient}>
-                  <time>{time}</time><div className={`patient-avatar ${color}`}>{initials}</div><div className="patient-info"><strong>{patient}</strong><span>{department}</span></div><div className="doctor-name"><span>with</span>{doctor}</div><span className="confirmed">Confirmed</span><button className="row-more" type="button" aria-label={`More options for ${patient}`}><Icon name="more" /></button>
-                </div>)}
+                {dashboardAppointments.length ? dashboardAppointments.map((appointment) => <div className="appointment-row" key={appointment.id}>
+                  <time>{String(appointment.appointmentTime).slice(0, 5)}</time><div className="patient-avatar blue">{appointment.patientName.split(' ').map((part) => part[0]).join('').slice(0, 2)}</div><div className="patient-info"><strong>{appointment.patientName}</strong><span>{appointment.department}</span></div><div className="doctor-name"><span>with</span>{appointment.doctorName}</div><span className="confirmed">{appointment.status}</span>
+                </div>) : <p className="dashboard-empty">No appointments scheduled for today.</p>}
               </div>
             </article>
 
             <article className="panel patient-panel">
-              <div className="panel-header"><div><h3>Patient Statistics</h3><p>Patient distribution <span className="demo-pill">DEMO</span></p></div><button className="dots" type="button" aria-label="More patient statistics"><Icon name="more" /></button></div>
-              <div className="patient-stat-body"><div className="donut-chart"><div><strong>2,815</strong><span>Total patients</span></div></div><div className="patient-legend">{patientTypes.map(([label, value, percent, tone]) => <div className="legend-row" key={label}><span className={`legend-dot ${tone}`} /><div><strong>{label}</strong><small>{value} patients</small></div><b>{percent}</b></div>)}</div></div>
+              <div className="panel-header"><div><h3>Patient Statistics</h3><p>Current registered patients</p></div><button className="dots" type="button" aria-label="More patient statistics"><Icon name="more" /></button></div>
+              <div className="patient-stat-body"><div className="donut-chart"><div><strong>{dashboard?.totalPatients ?? '—'}</strong><span>Total patients</span></div></div><div className="patient-legend"><div className="legend-row"><span className="legend-dot outpatient" /><div><strong>Registered</strong><small>{dashboard?.totalPatients ?? 0} patients</small></div><b>Live</b></div></div></div>
             </article>
 
             <article className="panel activity-panel">

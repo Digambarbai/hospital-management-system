@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/health", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/dashboard/**").hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/profile", "/api/auth/change-password").hasRole("ADMIN")
                         .requestMatchers("/api/auth/doctor-profile", "/api/auth/doctor-change-password").hasRole("DOCTOR")
